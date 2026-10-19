@@ -11,6 +11,8 @@
 
 import sys
 from src import AudioAnalyzer
+from src import SpeechAligner
+from src import SyllableLookup
 
 def main():
     # python main AUDIO_FILE TRANSCRIPT_FILE
@@ -19,7 +21,12 @@ def main():
     print(f"Audio File: {audio_file_path}")
     print(f"Transcript: {transcript_file_path}")
 
-    AudioAnalyzer.plot_audio(audio_file_path)
+    # AudioAnalyzer.plot_audio(audio_file_path)
+    aligned_audio = SpeechAligner.align_transcript(audio_file_path, transcript_file_path)
+    word_segments = aligned_audio["word_segments"]
+    print(word_segments)
+
+    SyllableLookup.get_pronunciation_from_transcript(transcript_file_path)
 
 if __name__ == "__main__":
     main()
