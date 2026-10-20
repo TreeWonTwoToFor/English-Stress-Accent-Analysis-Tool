@@ -8,11 +8,13 @@ def get_pronunciation_from_transcript(transcript_file_path):
     for i in range(len(transcript_word_list)):
         transcript_word_list[i] = transcript_word_list[i].strip()
 
+    output = ""
     for word in transcript_word_list:
         syllables = get_syllables_from_word(word)
         for syllable in syllables:
-            print(f"{syllable[1]}({syllable[2]})", end=' ')
-        print()
+            output = output + f"{syllable[1]}({syllable[2]}) "
+        output = output + '\n'
+    return output[:-1]
 
 def get_syllables_from_word(word):
     word_syllable_info = syllabify.syllabify(word)

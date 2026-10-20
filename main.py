@@ -1,6 +1,6 @@
 """
 1. take in as input the transcript, as well as the WAV file. [DONE]
-2. split up the speech into each respective syllable. [currently can grab the word.]
+2. split up the speech into each respective syllable. [DONE - phonetic representation]
 3. on each syllable, get some general informtion about it (such as loudness, pitch, etc).
 4. Then, use that information to determine whether a syllable is stressed/the quality of the stress accent.
 5. display that information back to the user
@@ -21,12 +21,18 @@ def main():
     print(f"Audio File: {audio_file_path}")
     print(f"Transcript: {transcript_file_path}")
 
-    # AudioAnalyzer.plot_audio(audio_file_path)
+    audio = AudioAnalyzer.get_audio(audio_file_path)
+    # AudioAnalyzer.plot_audio(audio)
+
     aligned_audio = SpeechAligner.align_transcript(audio_file_path, transcript_file_path)
     word_segments = aligned_audio["word_segments"]
-    print(word_segments)
+    SpeechAligner.print_aligned_words(word_segments)
 
-    SyllableLookup.get_pronunciation_from_transcript(transcript_file_path)
+    print(SyllableLookup.get_pronunciation_from_transcript(transcript_file_path))
+
+    for word in word_segments:
+        word_audio = AudioAnalyzer.get_audio_segment(audio, word['start'], word['end'])
+        AudioAnalyzer.plot_audio(word_audio)
 
 if __name__ == "__main__":
     main()
