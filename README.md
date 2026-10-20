@@ -5,4 +5,4 @@ English Stress Accent Analysis Tool (or ESAAT), is a tool which takes in an audi
 * numpy for general mathematical operations
 * librosa for sound analysis
 * whisperx for syncing up transcriptions to the audio. 
-* pronouncing for identifying syllables.
+* syllabify for identifying syllables + stress accent pattern
