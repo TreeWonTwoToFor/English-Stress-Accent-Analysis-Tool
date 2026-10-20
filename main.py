@@ -1,6 +1,6 @@
 """
-1. take in as input the transcript, as well as the WAV file.
-2. split up the speech into each respective syllable.
+1. take in as input the transcript, as well as the WAV file. [DONE]
+2. split up the speech into each respective syllable. [currently can grab the word.]
 3. on each syllable, get some general informtion about it (such as loudness, pitch, etc).
 4. Then, use that information to determine whether a syllable is stressed/the quality of the stress accent.
 5. display that information back to the user

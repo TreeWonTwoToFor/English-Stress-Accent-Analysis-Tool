@@ -1,4 +1,4 @@
-import pronouncing
+import syllabify
 
 def get_pronunciation_from_transcript(transcript_file_path):
     # read and clean transcript.
@@ -9,8 +9,16 @@ def get_pronunciation_from_transcript(transcript_file_path):
         transcript_word_list[i] = transcript_word_list[i].strip()
 
     for word in transcript_word_list:
-        pronunciations = pronouncing.phones_for_word(word)
-        syllable_count = pronouncing.syllable_count(pronunciations[0])
-        stress_pattern = pronouncing.stresses(pronunciations[0])
-        print(word, pronunciations)
-        print(syllable_count, stress_pattern)
+        syllables = get_syllables_from_word(word)
+        for syllable in syllables:
+            print(f"{syllable[1]}({syllable[2]})", end=' ')
+        print()
+
+def get_syllables_from_word(word):
+    word_syllable_info = syllabify.syllabify(word)
+    syllable_list = []
+    for word in word_syllable_info.words:
+        for syllable in word.syllables:
+            syllable_text = ''.join([x.phoneme for x in syllable.phonemes])
+            syllable_list.append([syllable, syllable_text, syllable.stress])
+    return syllable_list
