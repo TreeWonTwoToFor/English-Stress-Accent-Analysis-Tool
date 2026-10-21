@@ -9,6 +9,7 @@
     c. maybe some visual indicators, such as a stenograph, would be valuable for the learner.
 """
 
+from pathlib import Path
 import sys
 from src import AudioAnalyzer
 from src import SpeechAligner
@@ -19,19 +20,27 @@ def main():
     transcript_file_path = None
     match len(sys.argv):
         case 1:
-            # script_name -> just give a generic example
-            pass
+            # script_name 
+            print("Please input an audio file, along with a transcript for analysis.")
+            return
         case 2:
             # script_name folder_name -> use the folder name to get the native recording, learner recording, and transcript
-            pass
+            folder_name = sys.argv[1]
+            folder = Path(folder_name)
+            files = [f.name for f in folder.iterdir() if f.is_file()]
+            for file in files:
+                if 'transcript' in file:
+                    transcript_file_path = folder_name + file
+                else:
+                    audio_file_list.append(folder_name + file)
         case 3:
             # script_name audio_file transcript_file -> just give a single audio comparison
             audio_file_list = [sys.argv[1]]
             transcript_file_path = sys.argv[2]
-        case 4:
+        case _:
             # script_name audio_a audio_b transcript_file -> directly compare the two audios
-            audio_file_list = sys.argv[1:3]
-            transcript_file_path = sys.argv[3]
+            audio_file_list = sys.argv[1:-1]
+            transcript_file_path = sys.argv[-1]
     
     for file in audio_file_list:
         print(f"Audio File: {file}")
@@ -44,6 +53,7 @@ def main():
         audio = AudioAnalyzer.get_audio(file)
         aligned_audio = SpeechAligner.align_transcript(file, transcript_file_path)
         word_segments = aligned_audio["word_segments"]
+        print(f"{file}: ", end="")
         SpeechAligner.print_aligned_words(word_segments)
         word_audio = AudioAnalyzer.get_audio_segment(audio, word_segments[0]['start'], word_segments[0]['end'])
         word_audios.append(word_audio)
