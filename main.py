@@ -15,24 +15,39 @@ from src import SpeechAligner
 from src import SyllableLookup
 
 def main():
-    # python main AUDIO_FILE TRANSCRIPT_FILE
-    audio_file_path = sys.argv[1]
-    transcript_file_path = sys.argv[2]
-    print(f"Audio File: {audio_file_path}")
+    audio_file_list = []
+    transcript_file_path = None
+    match len(sys.argv):
+        case 1:
+            # script_name -> just give a generic example
+            pass
+        case 2:
+            # script_name folder_name -> use the folder name to get the native recording, learner recording, and transcript
+            pass
+        case 3:
+            # script_name audio_file transcript_file -> just give a single audio comparison
+            audio_file_list = [sys.argv[1]]
+            transcript_file_path = sys.argv[2]
+        case 4:
+            # script_name audio_a audio_b transcript_file -> directly compare the two audios
+            audio_file_list = sys.argv[1:3]
+            transcript_file_path = sys.argv[3]
+    
+    for file in audio_file_list:
+        print(f"Audio File: {file}")
     print(f"Transcript: {transcript_file_path}")
-
-    audio = AudioAnalyzer.get_audio(audio_file_path)
-    # AudioAnalyzer.plot_audio(audio)
-
-    aligned_audio = SpeechAligner.align_transcript(audio_file_path, transcript_file_path)
-    word_segments = aligned_audio["word_segments"]
-    SpeechAligner.print_aligned_words(word_segments)
 
     print(SyllableLookup.get_pronunciation_from_transcript(transcript_file_path))
 
-    for word in word_segments:
-        word_audio = AudioAnalyzer.get_audio_segment(audio, word['start'], word['end'])
-        AudioAnalyzer.plot_audio(word_audio)
+    word_audios = []
+    for file in audio_file_list:
+        audio = AudioAnalyzer.get_audio(file)
+        aligned_audio = SpeechAligner.align_transcript(file, transcript_file_path)
+        word_segments = aligned_audio["word_segments"]
+        SpeechAligner.print_aligned_words(word_segments)
+        word_audio = AudioAnalyzer.get_audio_segment(audio, word_segments[0]['start'], word_segments[0]['end'])
+        word_audios.append(word_audio)
+    AudioAnalyzer.plot_audios(word_audios)
 
 if __name__ == "__main__":
     main()

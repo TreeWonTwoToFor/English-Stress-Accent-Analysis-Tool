@@ -25,6 +25,17 @@ def plot_audio(audio, name="Audio Graph"):
 
     plt.show()
 
+def plot_audios(audio_list):
+    if len(audio_list) > 1:
+        fig, ax = plt.subplots(nrows=len(audio_list))
+        for i in range(len(audio_list)):
+            y, sr = audio_list[i]
+            librosa.display.waveshow(y, sr=sr, ax=ax[i])
+            ax[i].set(title=f"Audio #{i+1}")
+        plt.show()
+    else:
+        plot_audio(audio_list[0])
+
 def plot_fft(audio, name="Audio Graph"):
     y, sr = audio
     y_dft = np.fft.rfft(y)
