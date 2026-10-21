@@ -57,7 +57,7 @@ def main():
         SpeechAligner.print_aligned_words(word_segments)
         word_audio = AudioAnalyzer.get_audio_segment(audio, word_segments[0]['start'], word_segments[0]['end'])
         word_audios.append(word_audio)
-    AudioAnalyzer.plot_audios(word_audios)
+    AudioAnalyzer.plot_audios(word_audios, audio_file_list)
 
 if __name__ == "__main__":
     main()
