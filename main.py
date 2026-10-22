@@ -58,7 +58,21 @@ def main():
 
     syllable_times = []
     for syllable in syllables_arpa:
-        print(syllable)
+        syllable_text = ""
+        start_time, end_time = 0, 0
+        searching = True
+        while searching:
+            p_arpa, p_start, p_end = phones.pop(0)
+            p_arpa = p_arpa[:-1] if p_arpa[-1].isdigit() else p_arpa
+            if p_arpa in ['sil']:
+                continue
+            if syllable_text == "":
+                start_time = p_start
+            syllable_text = syllable_text + p_arpa
+            if syllable_text == syllable:
+                end_time = p_end
+                searching = False
+        print(syllable, start_time, end_time)
 
     return
 
