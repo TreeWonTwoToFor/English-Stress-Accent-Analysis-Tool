@@ -1,4 +1,5 @@
 assets/
+output/
 src/__pycache__/
 .venv/
 *.swp

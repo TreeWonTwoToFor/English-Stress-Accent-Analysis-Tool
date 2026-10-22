@@ -47,12 +47,15 @@ def main():
     print(f"Transcript: {transcript_file_path}")
 
     syllables_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
-    print(syllables_arpa)
 
     # testing MFA
     output_dir = Path("output").resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    grid = AudioAnalyzer.align_audio(audio_file_list[0], transcript_file_path, output_dir/"alignment.TextGrid")
+    grid = AudioAnalyzer.align_audio(
+            audio_file_list[0], 
+            transcript_file_path, 
+            output_dir/"alignment.TextGrid"
+    )
     phones = AudioAnalyzer.get_phones_from_textgrid(grid)
     print(phones)
 
@@ -60,8 +63,14 @@ def main():
     for syllable in syllables_arpa:
         syllable_text = ""
         start_time, end_time = 0, 0
+        print(syllable)
         searching = True
         while searching:
+            if len(phones) == 0:
+                # something went wrong, so just break out
+                searching = False
+                break
+            print(phones[0])
             p_arpa, p_start, p_end = phones.pop(0)
             p_arpa = p_arpa[:-1] if p_arpa[-1].isdigit() else p_arpa
             if p_arpa in ['sil']:
@@ -72,9 +81,9 @@ def main():
             if syllable_text == syllable:
                 end_time = p_end
                 searching = False
-        print(syllable, start_time, end_time)
+        syllable_times.append((syllable, start_time, end_time))
 
-    return
+    print(syllable_times)
 
     word_audios = []
     word_audio_titles = []
