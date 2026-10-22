@@ -38,4 +38,4 @@ def align_transcript(audio_file_path, transcript_file_path=None):
 
 def print_aligned_words(aligned_words):
     for word in aligned_words:
-        print(f"{word['word']} - [{word['start']}-{word['end']}]")
+        print(f"\t{word['word']} - [{word['start']}-{word['end']}]")

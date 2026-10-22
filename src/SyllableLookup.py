@@ -8,13 +8,21 @@ def get_pronunciation_from_transcript(transcript_file_path):
     for i in range(len(transcript_word_list)):
         transcript_word_list[i] = transcript_word_list[i].strip()
 
-    output = ""
+    syllable_list = []
     for word in transcript_word_list:
         syllables = get_syllables_from_word(word)
         for syllable in syllables:
-            output = output + f"{syllable[1]}({syllable[2]}) "
-        output = output + '\n'
-    return output[:-1]
+            syllable_list.append(syllable)
+
+    return syllable_list
+
+def get_arpa_from_transcript(transcript_file_path):
+    syllable_list = get_pronunciation_from_transcript(transcript_file_path)
+    return [syllable[1] for syllable in syllable_list]
+
+def get_stress_from_transcript(transcript_file_path):
+    syllable_list = get_pronunciation_from_transcript(transcript_file_path)
+    return [syllable[2] for syllable in syllable_list]
 
 def get_syllables_from_word(word):
     word_syllable_info = syllabify.syllabify(word)
