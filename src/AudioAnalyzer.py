@@ -81,9 +81,9 @@ def plot_audio(audio, name="Audio Graph"):
     librosa.display.waveshow(y, sr=sr, ax=ax)
     ax.set(title=name)
 
-    plt.show()
-
 def plot_audios(audio_list, names_list=None):
+    if type(audio_list) is not list:
+        audio_list = [audio_list]
     if names_list is None:
         names_list = [f"Audio file #{i+1}" for i in range(len(audio_list))]
     if len(audio_list) > 1:
@@ -92,7 +92,6 @@ def plot_audios(audio_list, names_list=None):
             y, sr = audio_list[i]
             librosa.display.waveshow(y, sr=sr, ax=ax[i])
             ax[i].set(title=names_list[i])
-        plt.show()
     else:
         plot_audio(audio_list[0])
 
@@ -109,4 +108,8 @@ def plot_fft(audio, name="Audio Graph"):
               xlabel="Frequency (Hz)",
               ylabel="Magnitude")
 
+def plot_line(pt_a, pt_b):
+    plt.plot([pt_a[0], pt_b[0]], [pt_a[1], pt_b[1]])
+    
+def plot_show():
     plt.show()

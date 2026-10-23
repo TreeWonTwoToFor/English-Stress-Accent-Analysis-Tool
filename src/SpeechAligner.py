@@ -1,7 +1,7 @@
 import whisperx
 
 device = "cpu"
-model = whisperx.load_model("base", device)
+model = whisperx.load_model("base", device, compute_type="int8")
 
 def align_transcript(audio_file_path, transcript_file_path=None):
     audio = whisperx.load_audio(audio_file_path)

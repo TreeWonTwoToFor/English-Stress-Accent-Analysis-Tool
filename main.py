@@ -46,31 +46,44 @@ def main():
         print(f"Audio File: {file}")
     print(f"Transcript: {transcript_file_path}")
 
-    syllables_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
+    #for audio_file in audio_file_list:
+    #    print(get_syllable_timings(audio_file, transcript_file_path))
+    #plot_audios(audio_file_list, transcript_file_path)
 
-    # testing MFA
+    for audio_file in audio_file_list:
+        timings = get_syllable_timings(audio_file, transcript_file_path)
+        audio = AudioAnalyzer.get_audio(audio_file)
+        AudioAnalyzer.plot_audios(audio)
+        for syllable in timings:
+            AudioAnalyzer.plot_line((syllable[1], -1), (syllable[1], 1))
+        AudioAnalyzer.plot_show()
+        
+
+def get_syllable_timings(audio_file, transcript_file_path, printing=False):
     output_dir = Path("output").resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    syllables_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
+
+    audio_name = audio_file.split('/')[-1].split('.')[0]
     grid = AudioAnalyzer.align_audio(
-            audio_file_list[0], 
+            audio_file,
             transcript_file_path, 
-            output_dir/"alignment.TextGrid"
+            output_dir/ str(audio_name + "_alignment.TextGrid")
     )
     phones = AudioAnalyzer.get_phones_from_textgrid(grid)
-    print(phones)
 
     syllable_times = []
     for syllable in syllables_arpa:
         syllable_text = ""
         start_time, end_time = 0, 0
-        print(syllable)
+        if printing: print(syllable)
         searching = True
         while searching:
             if len(phones) == 0:
                 # something went wrong, so just break out
                 searching = False
                 break
-            print(phones[0])
+            if printing: print(phones[0])
             p_arpa, p_start, p_end = phones.pop(0)
             p_arpa = p_arpa[:-1] if p_arpa[-1].isdigit() else p_arpa
             if p_arpa in ['sil']:
@@ -82,9 +95,9 @@ def main():
                 end_time = p_end
                 searching = False
         syllable_times.append((syllable, start_time, end_time))
+    return syllable_times
 
-    print(syllable_times)
-
+def plot_audios(audio_file_list, transcript_file_path):
     word_audios = []
     word_audio_titles = []
     for file in audio_file_list:
@@ -98,6 +111,7 @@ def main():
             word_audios.append(word_audio)
             word_audio_titles.append(f"{file} - '{word["word"]}'")
     AudioAnalyzer.plot_audios(word_audios, word_audio_titles)
+    AudioAnalyzer.plot_show()
 
 if __name__ == "__main__":
     main()
