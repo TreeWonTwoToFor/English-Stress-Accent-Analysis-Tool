@@ -4,11 +4,15 @@ import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+The 'audio' parameter is composed of y and sr.
+y - array of samples
+sr - sample rate
+"""
+
 # utility functions to get and manipulate audio
 
 def get_audio(audio_file_path):
-    # y is the array of samples in the audio file
-    # sr is the Sample Rate
     y, sr = librosa.load(audio_file_path)
     return (y,sr)
 
@@ -19,6 +23,10 @@ def get_audio_segment(audio, start, end):
     end_sample = int(end*sr)
 
     return (y[start_sample:end_sample], sr)
+
+def get_audio_length(audio):
+    y, sr = audio
+    return y.shape[0]/sr
 
 # audio analysis functions
 
@@ -110,6 +118,6 @@ def plot_fft(audio, name="Audio Graph"):
 
 def plot_line(pt_a, pt_b):
     plt.plot([pt_a[0], pt_b[0]], [pt_a[1], pt_b[1]])
-    
+
 def plot_show():
     plt.show()
