@@ -1,6 +1,6 @@
 """
 1. take in as input the transcript, as well as the WAV file. [DONE]
-2. split up the speech into each respective syllable. [DONE - but is quite inconsistent as of rn. ARPA/speech recognition both need improvement]
+2. split up the speech into each respective syllable. [DONE - good enough for now]
 3. on each syllable, get some general informtion about it (such as loudness, pitch, etc).
 4. Then, use that information to determine whether a syllable is stressed/the quality of the stress accent.
 5. display that information back to the user
@@ -47,34 +47,63 @@ def main():
     print(f"Transcript: {transcript_file_path}")
 
     for audio_file in audio_file_list:
-        # timings is a list of words, which are lists of syllables
         syllable_timings = get_syllable_timings(audio_file, transcript_file_path)
+        phoneme_timings = get_phoneme_timings(audio_file, transcript_file_path)
 
-        # uses the aligned audio to get a more precise timing system
+        vowel_list = []
+        for phoneme in phoneme_timings:
+            if phoneme[0][-1].isdigit():
+                vowel_list.append(phoneme)
+         
         audio = AudioAnalyzer.get_audio(audio_file)
-        aligned_audio = SpeechAligner.align_transcript(audio_file, transcript_file_path)
-        word_segments = aligned_audio["word_segments"]
-        word_start_times = [float(w["start"]) for w in word_segments]
-
-        # uses the (presumably) more accurate word start time to offset the syllable timings
-        for i in range(len(word_start_times)):
-            # word start time  minus first syllable start time
-            offset = word_start_times[i]-syllable_timings[i][0][1]
-            for j in range(len(syllable_timings[i])):
-                word = syllable_timings[i][j]
-                syllable_timings[i][j] = (word[0], word[1]+offset, word[2]+offset)
-
-        AudioAnalyzer.plot_audios(audio)
-
-        print(audio_file)
-        for i in range(len(syllable_timings)):
-            word = syllable_timings[i]
-            print(word)
-            for syllable in word:
-                AudioAnalyzer.plot_line((syllable[1], -1), (syllable[1], 1))
-        SpeechAligner.print_aligned_words(word_segments)
-
+        vowel_audio_list = AudioAnalyzer.get_phonemes_from_audio(audio, vowel_list)
+        for vowel in vowel_audio_list:
+            rms, rms_db = AudioAnalyzer.get_volume(audio)
+            f_mean, f_median, f_min, f_max = AudioAnalyzer.get_fundamental_frequency(audio)
+            print(f"RMS: {rms} ({rms_db}db)")
+            print(f"Frequency info:\n\tmean: {f_mean}, median: {f_median}, min-max: {f_min}-{f_max}")
+        AudioAnalyzer.plot_audios(vowel_audio_list)
         AudioAnalyzer.plot_show()
+
+        # little bit of unused code for plotting lines over each syllable
+        #for i in range(len(syllable_timings)):
+        #    word = syllable_timings[i]
+        #    for syllable in word:
+        #        AudioAnalyzer.plot_line((syllable[1], -1), (syllable[2], 1))
+        #SpeechAligner.print_aligned_words(word_segments)
+
+def get_offsets_from_aligned_audio(audio, syllable_timings):
+    audio = AudioAnalyzer.get_audio(audio_file)
+    aligned_audio = SpeechAligner.align_transcript(audio_file, transcript_file_path)
+    word_segments = aligned_audio["word_segments"]
+    word_start_times = [float(w["start"]) for w in word_segments]
+
+    # uses the (presumably) more accurate word start time to offset the syllable timings
+    offset_list = []
+    for i in range(len(word_start_times)):
+        # word start time  minus first syllable start time
+        offset = word_start_times[i]-syllable_timings[i][0][1]
+        offset_list.append(offset)
+        #for j in range(len(syllable_timings[i])):
+        #    word = syllable_timings[i][j]
+        #    syllable_timings[i][j] = (word[0], word[1]+offset, word[2]+offset)
+    return offset_list
+
+def get_phoneme_timings(audio_file, transcript_file_path, printing=False):
+    output_dir = Path("output").resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    words_in_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
+
+    audio_name = audio_file.split('/')[-1].split('.')[0]
+    grid = AudioAnalyzer.align_audio(
+            audio_file,
+            transcript_file_path, 
+            output_dir/ str(audio_name + "_alignment.TextGrid")
+    )
+    phones = AudioAnalyzer.get_phones_from_textgrid(grid)
+    phones_ending_time = phones[-2][2] # a backup for if a word isn't properly caught
+
+    return phones
 
 def get_syllable_timings(audio_file, transcript_file_path, printing=False):
     output_dir = Path("output").resolve()

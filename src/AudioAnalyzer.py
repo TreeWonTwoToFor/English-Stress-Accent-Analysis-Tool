@@ -32,10 +32,45 @@ def get_audio_length(audio):
 
 """
 what kinds of functions would I want to have access to?
-1. split the words into syllable audio segments
-2. measure auditory information (such as volume, and pitch)
+1. split the words into syllable audio segments [DONE]
+2. measure auditory information (such as volume, and pitch) [DONE]
 3. use that information to determine if a syllable is stressed
 """
+
+def get_syllables_from_audio(audio, syllable_timings):
+    word_list = []
+    for word in syllable_timings:
+        syllable_list = []
+        for syllable in word:
+            syllable_list.append(get_audio_segment(audio, syllable[1], syllable[2]))
+        word_list.append(syllable_list)
+    return word_list
+
+def get_phonemes_from_audio(audio, phoneme_timings):
+    return [get_audio_segment(audio, p[1], p[2]) for p in phoneme_timings]
+
+def get_volume(audio):
+    y, sr = audio
+    rms = librosa.feature.rms(y=y)[0][0]
+    rms_db = librosa.amplitude_to_db(
+        np.array([rms]),
+        ref=1.0
+    )[0]
+    return (float(rms), float(rms_db))
+
+def get_fundamental_frequency(audio):
+    y, sr = audio
+    f0 = librosa.yin(
+        y,
+        fmin=60,
+        fmax=400,
+        sr=sr
+    )
+
+    # Removes invalid values, if any
+    f0 = f0[np.isfinite(f0)]
+
+    return (float(np.mean(f0)), float(np.median(f0)), float(np.min(f0)), float(np.max(f0)))
 
 # audio_path and output_dir are both Path objects, while transcript is just a text file
 def align_audio(audio_path, transcript_path, alignment_path):
