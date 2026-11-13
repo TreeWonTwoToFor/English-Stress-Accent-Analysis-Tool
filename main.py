@@ -46,8 +46,12 @@ def main():
         print(f"Audio File: {file}")
     print(f"Transcript: {transcript_file_path}")
 
+    vowel_grid = []
     for audio_file in audio_file_list:
+        print(f"\nAnalysis for {audio_file.split('/')[-1]}")
         syllable_timings = get_syllable_timings(audio_file, transcript_file_path)
+        vowel_timings = get_vowel_timings(audio_file, transcript_file_path)
+        # NOTE: vowel timings organizes everything into word lists, which can then be used to the the per-word stress
         phoneme_timings = get_phoneme_timings(audio_file, transcript_file_path)
 
         vowel_list = []
@@ -58,12 +62,14 @@ def main():
         audio = AudioAnalyzer.get_audio(audio_file)
         vowel_audio_list = AudioAnalyzer.get_phonemes_from_audio(audio, vowel_list)
         for vowel in vowel_audio_list:
-            rms, rms_db = AudioAnalyzer.get_volume(audio)
-            f_mean, f_median, f_min, f_max = AudioAnalyzer.get_fundamental_frequency(audio)
-            print(f"RMS: {rms} ({rms_db}db)")
-            print(f"Frequency info:\n\tmean: {f_mean}, median: {f_median}, min-max: {f_min}-{f_max}")
-        AudioAnalyzer.plot_audios(vowel_audio_list)
-        AudioAnalyzer.plot_show()
+            rms, rms_db = AudioAnalyzer.get_volume(vowel)
+            f_mean, f_median, f_min, f_max = AudioAnalyzer.get_fundamental_frequency(vowel)
+            print(f"RMS: {rms} ({round(rms_db, 2)}db)")
+            print("Frequency info:")
+            print(f"\tmean: {round(f_mean,2)}, median: {round(f_median,2)}, min-max: {round(f_min,2)}-{round(f_max, 2)}")
+        #AudioAnalyzer.plot_audio_list(vowel_audio_list)
+        #AudioAnalyzer.plot_show()
+        vowel_grid.append(vowel_audio_list)
 
         # little bit of unused code for plotting lines over each syllable
         #for i in range(len(syllable_timings)):
@@ -71,6 +77,8 @@ def main():
         #    for syllable in word:
         #        AudioAnalyzer.plot_line((syllable[1], -1), (syllable[2], 1))
         #SpeechAligner.print_aligned_words(word_segments)
+    AudioAnalyzer.plot_audio_grid(vowel_grid)
+    AudioAnalyzer.plot_show()
 
 def get_offsets_from_aligned_audio(audio, syllable_timings):
     audio = AudioAnalyzer.get_audio(audio_file)
@@ -92,7 +100,6 @@ def get_offsets_from_aligned_audio(audio, syllable_timings):
 def get_phoneme_timings(audio_file, transcript_file_path, printing=False):
     output_dir = Path("output").resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    words_in_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
 
     audio_name = audio_file.split('/')[-1].split('.')[0]
     grid = AudioAnalyzer.align_audio(
@@ -100,23 +107,11 @@ def get_phoneme_timings(audio_file, transcript_file_path, printing=False):
             transcript_file_path, 
             output_dir/ str(audio_name + "_alignment.TextGrid")
     )
-    phones = AudioAnalyzer.get_phones_from_textgrid(grid)
-    phones_ending_time = phones[-2][2] # a backup for if a word isn't properly caught
-
-    return phones
+    return AudioAnalyzer.get_phones_from_textgrid(grid)
 
 def get_syllable_timings(audio_file, transcript_file_path, printing=False):
-    output_dir = Path("output").resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
     words_in_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
-
-    audio_name = audio_file.split('/')[-1].split('.')[0]
-    grid = AudioAnalyzer.align_audio(
-            audio_file,
-            transcript_file_path, 
-            output_dir/ str(audio_name + "_alignment.TextGrid")
-    )
-    phones = AudioAnalyzer.get_phones_from_textgrid(grid)
+    phones = get_phoneme_timings(audio_file, transcript_file_path, printing)
     phones_ending_time = phones[-2][2] # a backup for if a word isn't properly caught
 
     word_times = []
@@ -145,6 +140,7 @@ def get_syllable_timings(audio_file, transcript_file_path, printing=False):
                     searching = False
             syllable_times.append((syllable, start_time, end_time))
         word_times.append(syllable_times)
+    # fixing up some bad word timing cases
     for i in range(len(word_times)):
         for j in range(len(word_times[i])):
             s = word_times[i][j]
@@ -164,7 +160,45 @@ def get_syllable_timings(audio_file, transcript_file_path, printing=False):
                 word_times[i][j] = (s[0], s[1], new_end)
     return word_times
 
-def plot_audios(audio_file_list, transcript_file_path):
+def get_vowel_timings(audio_file, transcript_file_path, printing=False):
+    words_in_arpa = SyllableLookup.get_arpa_from_transcript(transcript_file_path)
+    phones = get_phoneme_timings(audio_file, transcript_file_path, printing)
+    phones_ending_time = phones[-2][2] # a backup for if a word isn't properly caught
+
+    word_times = []
+    for word in words_in_arpa:
+        syllable_times = []
+        for syllable in word:
+            syllable_text = ""
+            start_time, end_time = 0, 0
+            per_syllable_phoneme_list = []
+            if printing: print(syllable)
+            searching = True
+            while searching:
+                if len(phones) == 0:
+                    # something went wrong, so just break out
+                    searching = False
+                    break
+                if printing: print(phones[0])
+                p_arpa, p_start, p_end = phones.pop(0)
+                p_old_arpa = p_arpa
+                p_arpa = p_arpa[:-1] if p_arpa[-1].isdigit() else p_arpa
+                if p_arpa in ['sil']:
+                    continue
+                syllable_text = syllable_text + p_arpa
+                if syllable_text == "":
+                    start_time = p_start
+                if syllable_text == syllable:
+                    end_time = p_end
+                    searching = False
+                per_syllable_phoneme_list.append((p_old_arpa, p_start, p_end))
+            # this search is really ugly, but it does the job
+            vowel = [x for x in per_syllable_phoneme_list if x[0][-1].isdigit()][0]
+            if len(per_syllable_phoneme_list) != 0: syllable_times.append(vowel)
+        word_times.append(syllable_times)
+    return word_times
+
+def plot_audio_list(audio_file_list, transcript_file_path):
     word_audios = []
     word_audio_titles = []
     for file in audio_file_list:
@@ -177,7 +211,7 @@ def plot_audios(audio_file_list, transcript_file_path):
             word_audio = AudioAnalyzer.get_audio_segment(audio, word['start'], word['end'])
             word_audios.append(word_audio)
             word_audio_titles.append(f"{file} - '{word["word"]}'")
-    AudioAnalyzer.plot_audios(word_audios, word_audio_titles)
+    AudioAnalyzer.plot_audio_list(word_audios, word_audio_titles)
     AudioAnalyzer.plot_show()
 
 if __name__ == "__main__":

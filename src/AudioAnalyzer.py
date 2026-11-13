@@ -124,7 +124,7 @@ def plot_audio(audio, name="Audio Graph"):
     librosa.display.waveshow(y, sr=sr, ax=ax)
     ax.set(title=name)
 
-def plot_audios(audio_list, names_list=None):
+def plot_audio_list(audio_list, names_list=None):
     if type(audio_list) is not list:
         audio_list = [audio_list]
     if names_list is None:
@@ -137,6 +137,19 @@ def plot_audios(audio_list, names_list=None):
             ax[i].set(title=names_list[i])
     else:
         plot_audio(audio_list[0])
+
+def plot_audio_grid(audio_grid, names_list=None):
+    # names_list should have one name per 'row', aka each audio stream, where a 'stream' is just the sublist.
+    # a good use case of this would be that we can compare two recordings of the same thing, split into syllbales.
+    if names_list is None:
+        names_list = [f"Audio file #{i+1}" for i in range(len(audio_grid))]
+    # this does presume that all audios have the same number of syllables, which should be checked at some point
+    fig, ax = plt.subplots(nrows=len(audio_grid), ncols=len(audio_grid[0]), sharex="col")
+    for i in range(len(audio_grid)):
+        for j in range(len(audio_grid[i])):
+            y, sr = audio_grid[i][j]
+            librosa.display.waveshow(y, sr=sr, ax=ax[i,j])
+            ax[i,j].set(title=str(names_list[i] + f", Clip #{j+1}"))
 
 def plot_fft(audio, name="Audio Graph"):
     y, sr = audio
