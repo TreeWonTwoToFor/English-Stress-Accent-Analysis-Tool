@@ -47,11 +47,14 @@ def main():
     print(f"Transcript: {transcript_file_path}")
 
     vowel_grid = []
-    for audio_file in audio_file_list:
-        print(f"\nAnalysis for {audio_file.split('/')[-1]}")
+    vowel_text_grid = []
+    for i in range(len(audio_file_list)):
+        audio_file = audio_file_list[i]
+        audio_str = f"Analyzing {audio_file.split('/')[-1]}"
+        print(audio_str)
         syllable_timings = get_syllable_timings(audio_file, transcript_file_path)
         vowel_timings = get_vowel_timings(audio_file, transcript_file_path)
-        # NOTE: vowel timings organizes everything into word lists, which can then be used to the the per-word stress
+        # vowel timings organizes everything into word lists, which can then be used to the the per-word stress
         phoneme_timings = get_phoneme_timings(audio_file, transcript_file_path)
 
         vowel_list = []
@@ -61,23 +64,31 @@ def main():
          
         audio = AudioAnalyzer.get_audio(audio_file)
         vowel_audio_list = AudioAnalyzer.get_phonemes_from_audio(audio, vowel_list)
-        for vowel in vowel_audio_list:
+        vowel_text_list = []
+        for j in range(len(vowel_audio_list)):
+            vowel = vowel_audio_list[j]
             rms, rms_db = AudioAnalyzer.get_volume(vowel)
-            f_mean, f_median, f_min, f_max = AudioAnalyzer.get_fundamental_frequency(vowel)
-            print(f"RMS: {rms} ({round(rms_db, 2)}db)")
-            print("Frequency info:")
-            print(f"\tmean: {round(f_mean,2)}, median: {round(f_median,2)}, min-max: {round(f_min,2)}-{round(f_max, 2)}")
-        #AudioAnalyzer.plot_audio_list(vowel_audio_list)
-        #AudioAnalyzer.plot_show()
+            f_mean, f_median, f_min, f_max = [round(x,2) for x in AudioAnalyzer.get_fundamental_frequency(vowel)]
+            vowel_text_list.append([f"Audio #{i+1} Vowel #{j+1}", str(rms), str(round(rms_db, 2)), str(f_mean), str(f_median), f"{f_min}-{f_max}"])
         vowel_grid.append(vowel_audio_list)
-
-        # little bit of unused code for plotting lines over each syllable
-        #for i in range(len(syllable_timings)):
-        #    word = syllable_timings[i]
-        #    for syllable in word:
-        #        AudioAnalyzer.plot_line((syllable[1], -1), (syllable[2], 1))
-        #SpeechAligner.print_aligned_words(word_segments)
+        vowel_text_grid.append(vowel_text_list)
+    
+    csv_str = ""
+    for vowel_list in vowel_text_grid:
+        csv_entry_list = [",", "rms,", "rms_db,", "f_mean,", "f_median,", "f_range,", ""]
+        for vowel_info in vowel_list:
+            for i in range(len(vowel_info)):
+                csv_entry_list[i] = csv_entry_list[i] + vowel_info[i] + ','
+        csv_entry_str = "\n".join(csv_entry_list)
+        csv_str = csv_str + csv_entry_str + '\n'
+    with open("./output/test_csv.csv", 'w') as file:
+        file.write(csv_str)
     AudioAnalyzer.plot_audio_grid(vowel_grid)
+    AudioAnalyzer.plot_save()
+    
+    # show output
+    print()
+    print(csv_str[:-1])
     AudioAnalyzer.plot_show()
 
 def get_offsets_from_aligned_audio(audio, syllable_timings):
@@ -92,9 +103,6 @@ def get_offsets_from_aligned_audio(audio, syllable_timings):
         # word start time  minus first syllable start time
         offset = word_start_times[i]-syllable_timings[i][0][1]
         offset_list.append(offset)
-        #for j in range(len(syllable_timings[i])):
-        #    word = syllable_timings[i][j]
-        #    syllable_timings[i][j] = (word[0], word[1]+offset, word[2]+offset)
     return offset_list
 
 def get_phoneme_timings(audio_file, transcript_file_path, printing=False):

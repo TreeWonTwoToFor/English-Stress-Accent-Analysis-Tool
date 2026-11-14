@@ -30,13 +30,6 @@ def get_audio_length(audio):
 
 # audio analysis functions
 
-"""
-what kinds of functions would I want to have access to?
-1. split the words into syllable audio segments [DONE]
-2. measure auditory information (such as volume, and pitch) [DONE]
-3. use that information to determine if a syllable is stressed
-"""
-
 def get_syllables_from_audio(audio, syllable_timings):
     word_list = []
     for word in syllable_timings:
@@ -144,7 +137,11 @@ def plot_audio_grid(audio_grid, names_list=None):
     if names_list is None:
         names_list = [f"Audio file #{i+1}" for i in range(len(audio_grid))]
     # this does presume that all audios have the same number of syllables, which should be checked at some point
-    fig, ax = plt.subplots(nrows=len(audio_grid), ncols=len(audio_grid[0]), sharex="col")
+    fig, ax = plt.subplots(nrows=len(audio_grid), ncols=len(audio_grid[0]), sharex="col", layout='constrained')
+    # rotating to make the text more clear
+    for axis in ax.flat:
+        axis.tick_params(axis='x', rotation=45)
+    # acutal procsessing - yay
     for i in range(len(audio_grid)):
         for j in range(len(audio_grid[i])):
             y, sr = audio_grid[i][j]
@@ -166,6 +163,9 @@ def plot_fft(audio, name="Audio Graph"):
 
 def plot_line(pt_a, pt_b):
     plt.plot([pt_a[0], pt_b[0]], [pt_a[1], pt_b[1]])
+
+def plot_save(name="./output/plot.png"):
+    plt.savefig(name, dpi=600, bbox_inches='tight', pad_inches=0.2)
 
 def plot_show():
     plt.show()
